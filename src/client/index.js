@@ -104,7 +104,7 @@ const setOptions = ({
 }
 
 // Universal method (client + server)
-const getSession = async ({ req, ctx, triggerEvent = true } = {}) => {
+const getSession = async ({ req, ctx, triggerEvent = true, updateSession = false } = {}) => {
   // If passed 'appContext' via getInitialProps() in _app.js then get the req
   // object from ctx and use that for the req value to allow getSession() to
   // work seemlessly in getInitialProps() on server side pages *and* in _app.js.
@@ -114,7 +114,7 @@ const getSession = async ({ req, ctx, triggerEvent = true } = {}) => {
   const fetchOptions = req ? { headers: { cookie: req.headers.cookie } } : {}
   const session = await _fetchData(`${baseUrl}/session`, fetchOptions)
   if (triggerEvent) {
-    _sendMessage({ event: 'session', data: { trigger: 'getSession' } })
+    _sendMessage({ event: 'session', data: { trigger: 'getSession' }, updateSession: updateSession })
   }
   return session
 }
@@ -322,6 +322,9 @@ const _encodedForm = (formData) => {
 const _sendMessage = (message) => {
   if (typeof localStorage !== 'undefined') {
     const timestamp = Math.floor(new Date().getTime() / 1000)
+    if(message.updateSession){
+      __NEXTAUTH._clientId = Math.random().toString(36).substring(2) + Date.now().toString(36)
+    }
     localStorage.setItem('nextauth.message', JSON.stringify({ ...message, clientId: __NEXTAUTH._clientId, timestamp })) // eslint-disable-line
   }
 }
